@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>fyz@terminal:~$</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0a;
+      color: #00ff41;
+      font-family: 'Courier New', Consolas, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+      animation: flicker 0.15s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 0.97; }
+      50% { opacity: 1; }
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,255,65,0.03) 0px,
+        transparent 1px,
+        transparent 2px,
+        rgba(0,255,65,0.03) 3px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .container { width: 100%; max-width: 1000px; }
+
+    /* Terminal Frame */
+    .terminal-header {
+      border: 2px solid #00ff41;
+      border-bottom: none;
+      padding: 10px 15px;
+      background: rgba(0,255,65,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .terminal-title { font-weight: bold; letter-spacing: 1px; }
+
+    .terminal-controls { display: flex; gap: 8px; }
+
+    .terminal-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid #00ff41;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .terminal-btn:hover { background: #00ff41; box-shadow: 0 0 10px #00ff41; }
+
+    .terminal-body {
+      border: 2px solid #00ff41;
+      background: rgba(0,255,65,0.02);
+      box-shadow: 0 0 30px rgba(0,255,65,0.2);
+      padding: 20px;
+      min-height: 70vh;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #00ff41; border-radius: 4px; }
+    .terminal-body::-webkit-scrollbar-track { background: rgba(0,255,65,0.1); }
+
+    /* Text and Output */
+    .output-line { margin-bottom: 3px; white-space: pre-wrap; word-wrap: break-word; }
+    .prompt { color: #00ff41; margin-right: 8px; }
+    .prompt-symbol { color: #0080ff; }
+
+    /* Progress Bars */
+    .progress-bar { margin: 10px 0; }
+    .progress-label { margin-bottom: 5px; color: #0080ff; }
+    .progress-track {
+      border: 1px solid #00ff41;
+      height: 18px;
+      background: rgba(0,0,0,0.3);
+    }
+    .progress-fill {
+      height: 100%;
+      background: repeating-linear-gradient(
+        90deg,
+        #00ff41 0px, #00ff41 10px,
+        #00cc33 10px, #00cc33 20px
+      );
+      transition: width .5s ease;
+    }
+
+    /* Tables and Boxes */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+    .table td {
+      padding: 8px 12px;
+      border: 1px solid #00ff41;
+    }
+    .table td:first-child { color: #0080ff; font-weight: bold; }
+
+    .status {
+      display: inline-block;
+      margin-right: 15px;
+    }
+    .status::before {
+      content: "●";
+      margin-right: 5px;
+    }
+    .status.online { color: #00ff41; }
+    .status.offline { color: #666; }
+
+    .info-box {
+      border: 1px solid #00ff41;
+      background: rgba(0,255,65,0.05);
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    .info-box-title {
+      color: #0080ff;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    /* Input Line */
+    .input-line {
+      display: flex;
+      align-items: center;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(0,255,65,0.2);
+    }
+
+    #terminal-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #00ff41;
+      font-family: inherit;
+      font-size: inherit;
+      outline: none;
+      padding: 5px;
+    }
+
+    #terminal-input::placeholder { color: rgba(0,255,65,0.4); }
+
+    .cursor {
+      width: 8px;
+      height: 16px;
+      background: #00ff41;
+      margin-left: 2px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    /* Utility */
+    .success { color: #00ff41; }
+    .error { color: #ff0040; }
+    .warning { color: #ffaa00; }
+    .info { color: #0080ff; }
+    .dim { color: #666; }
+
+    .ascii-art {
+      font-size: 10px;
+      line-height: 1.2;
+      letter-spacing: 1px;
+      text-align: center;
+      margin: 18px 0;
+      color: #00ff41;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 10px; font-size: 12px; }
+      .terminal-body { max-height: 80vh; }
+      .ascii-art { font-size: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="terminal-header">
+      <span class="terminal-title">fyz@portfolio:~$</span>
+      <div class="terminal-controls">
+        <div class="terminal-btn"></div>
+        <div class="terminal-btn"></div>
+        <div class="terminal-btn"></div>
+      </div>
+    </div>
+
+    <div class="terminal-body" id="terminal-output"></div>
+
+    <div class="input-line">
+      <span class="prompt">guest@system <span class="prompt-symbol">➜</span></span>
+      <input type="text" id="terminal-input" placeholder='Type "help" for commands' autocomplete="off" spellcheck="false">
+      <span class="cursor"></span>
+    </div>
+  </div>
+
+  <script>
+    const output = document.getElementById('terminal-output');
+    const input = document.getElementById('terminal-input');
+
+    const appendLine = (text = '', cls = '') => {
+      const line = document.createElement('div');
+      line.className = `output-line ${cls}`;
+      line.innerHTML = text;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    };
+
+    const appendHTML = html => {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html;
+      output.appendChild(wrapper);
+      output.scrollTop = output.scrollHeight;
+    };
+
+    const bootScreen = () => {
+      output.innerHTML = '';
+      ['System initialized successfully', 'Loading portfolio modules...', 'Connection established']
+        .forEach(msg => appendLine(`<span class="success">[✓]</span> ${msg}`, 'success'));
+
+      appendLine('');
+      appendLine('FYZ SYSTEM TERMINAL [Build v2.0.2]', 'info');
+      appendLine('------------------------------------------------', 'dim');
+      appendLine('Student | Developer | Designer | Educator');
+      appendLine('');
+      appendLine('Type <span class="info">help</span> to see available commands.');
+      appendLine('');
+    };
+
+    const showHelp = () => {
+      appendLine(commandEcho('help'));
+      appendLine('');
+      appendLine('AVAILABLE COMMANDS', 'info');
+      appendLine('------------------', 'dim');
+      ['about', 'skills', 'projects', 'status', 'contact', 'clear']
+        .forEach(cmd => appendLine(` <span class="info">${cmd}</span>`));
+      appendLine('');
+    };
+
+    const showAbout = () => {
+      appendLine(commandEcho('about'));
+      appendLine('');
+      appendLine('DEVELOPER PROFILE', 'info');
+      appendLine('-----------------', 'dim');
+      appendLine('<span class="info">Name:</span> Fayazul (FYZ)');
+      appendLine('<span class="info">Role:</span> Student | Developer | Designer | Educator');
+      appendLine('<span class="info">Mission:</span> Building interactive ecosystems for STEM learning.');
+      appendLine('Focus: Physics simulations, structured quiz engines, intuitive interfaces.');
+      appendLine('');
+    };
+
+    const showSkills = () => {
+      appendLine(commandEcho('skills'));
+      appendLine('');
+      appendLine('TECHNICAL COMPETENCIES', 'info');
+      appendLine('----------------------', 'dim');
+
+      const skills = [
+        { name: 'Python / FastAPI / Pymunk', level: 92 },
+        { name: 'JavaScript / React / Next.js', level: 88 },
+        { name: 'HTML / CSS / UI Design', level: 90 },
+        { name: 'DearPyGui / Data Visualization', level: 78 },
+        { name: 'Version Control / Teaching', level: 85 },
+      ];
+
+      skills.forEach(s => appendHTML(`
+        <div class="progress-bar">
+          <div class="progress-label">${s.name}</div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${s.level}%"></div>
+          </div>
+        </div>
+      `));
+      appendLine('');
+    };
+
+    const showProjects = () => {
+      appendLine(commandEcho('projects'));
+      appendLine('');
+      appendHTML(`
+        <table class="table">
+          <tr><td>DeltaBase</td><td>Unified Quiz Engine (CBSE + JEE/NEET)</td><td><span class="success">Active</span></td></tr>
+          <tr><td>Fizix Mech</td><td>Python-based Physics Sandbox</td><td><span class="success">Maintained</span></td></tr>
+          <tr><td>PageBite</td><td>Branding & UI Experimentation Hub</td><td><span class="warning">In Design</span></td></tr>
+          <tr><td>BratGen</td><td>AI-Powered Lyric Generator</td><td><span class="info">Prototype</span></td></tr>
+          <tr><td>Seatly</td><td>Seat Allocation Platform (Next.js)</td><td><span class="warning">In Progress</span></td></tr>
+        </table>
+      `);
+      appendLine('');
+    };
+
+    const showStatus = () => {
+      appendLine(commandEcho('status'));
+      appendHTML(`
+        <div class="info-box">
+          <div class="info-box-title">[System Status]</div>
+          <span class="status online">Main Server</span>
+          <span class="status online">Database</span>
+          <span class="status online">API Gateway</span>
+          <span class="status offline">Maintenance</span>
+        </div>
+      `);
+      appendLine('SYSTEM PERFORMANCE', 'info');
+      appendLine('------------------', 'dim');
+      appendLine('Fizix Mech Engine .......... <span class="success">FUNCTIONAL</span>');
+      appendLine('Learning Modules ........... <span class="success">UPDATED</span>');
+      appendLine('Performance Index .......... <span class="success">STABLE</span>');
+      appendLine('Last Deployment ............ 2025-01-15');
+      appendLine('');
+    };
+
+    const showContact = () => {
+      appendLine(commandEcho('contact'));
+      appendLine('');
+      appendLine('CONTACT DIRECTORY', 'info');
+      appendLine('-----------------', 'dim');
+      appendLine('<span class="info">GitHub:</span>  https://github.com/fyzl329');
+      appendLine('<span class="info">Email:</span>   fayazul.dev@gmail.com');
+      appendLine('<span class="info">Website:</span> https://pagebite.site');
+      appendLine('');
+    };
+
+    const commandEcho = cmd => `<span class="prompt">guest@system <span class="prompt-symbol">➜</span></span> ${cmd}`;
+
+    const handleCommand = cmd => {
+      const c = cmd.trim().toLowerCase();
+      if (!c) return;
+
+      if (c === '2249') {
+        appendLine(commandEcho(c));
+        appendLine('<span class="success">❤ hi mannu &lt;3 ❤</span>');
+        appendLine('');
+        return;
+      }
+
+      const commands = {
+        help: showHelp,
+        about: showAbout,
+        skills: showSkills,
+        projects: showProjects,
+        status: showStatus,
+        contact: showContact,
+        clear: bootScreen
+      };
+
+      if (commands[c]) commands[c]();
+      else {
+        appendLine(commandEcho(cmd));
+        appendLine(`<span class="error">Error:</span> Command not found: ${cmd}`);
+        appendLine('Type <span class="info">help</span> for available commands.');
+        appendLine('');
+      }
+    };
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        handleCommand(input.value);
+        input.value = '';
+      }
+    });
+
+    window.addEventListener('click', () => input.focus());
+    window.addEventListener('load', () => { bootScreen(); input.focus(); });
+  </script>
+</body>
+</html>
